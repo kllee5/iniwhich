@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from iniwhich.resolver import trace
+from iniwhich.resolver import read_file_list, trace
 
 
 class TraceTests(unittest.TestCase):
@@ -89,6 +89,43 @@ class TraceTests(unittest.TestCase):
 
         source_dict = result.to_dict()["sources"][0]
         self.assertIn("error", source_dict)
+
+
+class ReadFileListTests(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+
+    def _write(self, name: str, content: str) -> str:
+        path = os.path.join(self.tmpdir.name, name)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+        return path
+
+    def test_reads_one_path_per_line_in_order(self):
+        listfile = self._write("stack.txt", "base.ini\nprod.ini\nhotfix.ini\n")
+
+        self.assertEqual(
+            read_file_list(listfile), ["base.ini", "prod.ini", "hotfix.ini"]
+        )
+
+    def test_skips_blank_lines_and_comments(self):
+        listfile = self._write(
+            "stack.txt",
+            "\n# base layer\nbase.ini\n\n# per-environment override\nprod.ini\n",
+        )
+
+        self.assertEqual(read_file_list(listfile), ["base.ini", "prod.ini"])
+
+    def test_strips_surrounding_whitespace(self):
+        listfile = self._write("stack.txt", "  base.ini  \n\tprod.ini\t\n")
+
+        self.assertEqual(read_file_list(listfile), ["base.ini", "prod.ini"])
+
+    def test_empty_file_yields_empty_list(self):
+        listfile = self._write("stack.txt", "")
+
+        self.assertEqual(read_file_list(listfile), [])
 
 
 if __name__ == "__main__":

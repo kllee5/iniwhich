@@ -74,6 +74,30 @@ override chain.
 Exit code is `0` if the key resolves to a value anywhere in the stack, `1`
 if no file in the stack sets it.
 
+## reading the file list from a file
+
+If your config stack is long-lived, retyping it on every invocation gets
+old. `--files-from` reads the precedence-ordered list from a text file
+instead of argv, one path per line:
+
+`stack.txt`:
+
+```
+# base layer
+base.ini
+# per-environment override
+prod.ini
+hotfix.ini
+```
+
+```
+$ iniwhich db host --files-from stack.txt
+```
+
+Blank lines and lines starting with `#` are ignored, so you can annotate
+why each file is in the stack. `--files-from` and positional `FILES` are
+mutually exclusive - pick one.
+
 ## installing
 
 No dependencies beyond the standard library. From a checkout:

@@ -64,6 +64,24 @@ class TraceResult:
         return "\n".join(lines)
 
 
+def read_file_list(path: str) -> List[str]:
+    """Read a precedence-ordered list of INI file paths from a text file.
+
+    One path per line, lowest priority first - same order as the positional
+    FILES arguments on the command line. Blank lines and lines starting with
+    '#' are skipped so the list can carry comments explaining why a file is
+    where it is in the stack.
+    """
+    files = []
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            files.append(line)
+    return files
+
+
 def trace(section: str, key: str, filepaths: Sequence[str]) -> TraceResult:
     """Read each file in order and record what it says about section/key.
 
