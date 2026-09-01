@@ -98,6 +98,18 @@ Blank lines and lines starting with `#` are ignored, so you can annotate
 why each file is in the stack. `--files-from` and positional `FILES` are
 mutually exclusive - pick one.
 
+## the DEFAULT section
+
+INI's `[DEFAULT]` section is a fallback for any section that's actually
+present in the file - if `[db]` exists but doesn't set `host`, and
+`[DEFAULT]` does, that counts as `db.host` being set by that file, and
+`iniwhich` reports the `[DEFAULT]` value. An explicit value in `[db]` still
+wins over `[DEFAULT]` within the same file.
+
+`[DEFAULT]` does not reach into files that don't have the section at all -
+if a file has `[DEFAULT] host = x` but no `[db]` section, that file counts
+as not setting `db.host`, same as if `[DEFAULT]` weren't there.
+
 ## installing
 
 No dependencies beyond the standard library. From a checkout:

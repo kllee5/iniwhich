@@ -74,6 +74,37 @@ class TraceTests(unittest.TestCase):
 
         self.assertEqual(result.winner.value, "100%full")
 
+    def test_default_section_fills_in_for_a_section_that_exists(self):
+        path = self._write(
+            "with-default.ini", "[DEFAULT]\nhost = fallback-host\n\n[db]\nport = 5432\n"
+        )
+
+        result = trace("db", "host", [path])
+
+        self.assertTrue(result.sources[0].found)
+        self.assertEqual(result.winner.value, "fallback-host")
+
+    def test_explicit_value_in_section_overrides_default_section(self):
+        path = self._write(
+            "with-default.ini", "[DEFAULT]\nhost = fallback-host\n\n[db]\nhost = specific-host\n"
+        )
+
+        result = trace("db", "host", [path])
+
+        self.assertEqual(result.winner.value, "specific-host")
+
+    def test_default_section_does_not_apply_to_a_section_missing_entirely(self):
+        # [DEFAULT] only fills in for sections that are actually present in
+        # the file - it isn't a global fallback for any section name you ask
+        # about.
+        path = self._write("with-default.ini", "[DEFAULT]\nhost = fallback-host\n\n[cache]\nhost = x\n")
+
+        result = trace("db", "host", [path])
+
+        self.assertIsNone(result.winner)
+        self.assertFalse(result.sources[0].found)
+        self.assertIsNone(result.sources[0].error)
+
     def test_to_dict_omits_error_key_when_there_is_none(self):
         path = self._write("plain.ini", "[db]\nhost = localhost\n")
 

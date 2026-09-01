@@ -99,8 +99,16 @@ def trace(section: str, key: str, filepaths: Sequence[str]) -> TraceResult:
             sources.append(Source(file=path, found=False, value=None, error=str(exc)))
             continue
 
-        if parser.has_option(section, key):
-            sources.append(Source(file=path, found=True, value=parser.get(section, key)))
+        # has_option()/get() raise NoSectionError outright when the section
+        # isn't in the file at all - they only consult [DEFAULT] as a
+        # fallback for sections that do exist. So a file missing the section
+        # entirely is "not set", same as one that has the section but not
+        # the key; DEFAULT never kicks in on its own.
+        if parser.has_section(section) or section == configparser.DEFAULTSECT:
+            if parser.has_option(section, key):
+                sources.append(Source(file=path, found=True, value=parser.get(section, key)))
+            else:
+                sources.append(Source(file=path, found=False, value=None))
         else:
             sources.append(Source(file=path, found=False, value=None))
 
