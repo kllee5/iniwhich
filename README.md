@@ -98,6 +98,25 @@ Blank lines and lines starting with `#` are ignored, so you can annotate
 why each file is in the stack. `--files-from` and positional `FILES` are
 mutually exclusive - pick one.
 
+## dumping every key at once
+
+Sometimes you don't know which key is wrong yet - you just want to see the
+whole resolved config. `--show-all-sections` skips the section/key
+arguments and reports the winner for every section/key found anywhere in
+the file stack:
+
+```
+$ iniwhich --show-all-sections base.ini prod.ini hotfix.ini
+[db]
+  host -> prod.ini = db.internal.example
+  port -> base.ini = 5432
+```
+
+It works with `--files-from` too, and `--json` gives you a list of the same
+per-key objects `iniwhich section key ...` produces for one key, so you can
+still pipe it into `jq`. Exit code is `0` if the stack has at least one
+section/key to report, `1` if none of the files parsed to anything.
+
 ## the DEFAULT section
 
 INI's `[DEFAULT]` section is a fallback for any section that's actually

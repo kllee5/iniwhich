@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import configparser
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 
 @dataclass
@@ -113,3 +113,31 @@ def trace(section: str, key: str, filepaths: Sequence[str]) -> TraceResult:
             sources.append(Source(file=path, found=False, value=None))
 
     return TraceResult(section=section, key=key, sources=sources)
+
+
+def discover_section_keys(filepaths: Sequence[str]) -> List[Tuple[str, str]]:
+    """Find every (section, key) pair that shows up in any of the given files.
+
+    Backs --show-all-sections: rather than duplicate trace()'s file-reading
+    and DEFAULT-section rules, this only figures out *what* to trace, then
+    the caller runs trace() per pair. Files that fail to parse contribute no
+    pairs, but trace() will still surface their error for whichever keys the
+    other files reveal.
+    """
+    pairs = set()
+    for path in filepaths:
+        parser = configparser.RawConfigParser()
+        try:
+            with open(path, encoding="utf-8") as fh:
+                parser.read_file(fh)
+        except (OSError, configparser.Error):
+            continue
+
+        for section in parser.sections():
+            for key in parser.options(section):
+                pairs.add((section, key))
+
+        for key in parser.defaults():
+            pairs.add((configparser.DEFAULTSECT, key))
+
+    return sorted(pairs)

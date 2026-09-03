@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from iniwhich.resolver import read_file_list, trace
+from iniwhich.resolver import discover_section_keys, read_file_list, trace
 
 
 class TraceTests(unittest.TestCase):
@@ -120,6 +120,68 @@ class TraceTests(unittest.TestCase):
 
         source_dict = result.to_dict()["sources"][0]
         self.assertIn("error", source_dict)
+
+
+class DiscoverSectionKeysTests(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+
+    def _write(self, name: str, content: str) -> str:
+        path = os.path.join(self.tmpdir.name, name)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+        return path
+
+    def test_collects_pairs_across_files(self):
+        base = self._write("base.ini", "[db]\nhost = localhost\nport = 5432\n")
+        cache = self._write("cache.ini", "[cache]\nhost = 127.0.0.1\n")
+
+        pairs = discover_section_keys([base, cache])
+
+        self.assertEqual(
+            pairs, [("cache", "host"), ("db", "host"), ("db", "port")]
+        )
+
+    def test_does_not_duplicate_a_key_set_in_more_than_one_file(self):
+        base = self._write("base.ini", "[db]\nhost = localhost\n")
+        prod = self._write("prod.ini", "[db]\nhost = db.internal.example\n")
+
+        pairs = discover_section_keys([base, prod])
+
+        self.assertEqual(pairs, [("db", "host")])
+
+    def test_default_section_keys_are_reported_under_default(self):
+        path = self._write(
+            "with-default.ini", "[DEFAULT]\nhost = fallback-host\n\n[db]\nport = 5432\n"
+        )
+
+        pairs = discover_section_keys([path])
+
+        self.assertIn(("DEFAULT", "host"), pairs)
+        self.assertIn(("db", "port"), pairs)
+        # the DEFAULT value also shows up as db.host via fallback, since
+        # options() on a real section includes inherited DEFAULT keys
+        self.assertIn(("db", "host"), pairs)
+
+    def test_unparseable_file_contributes_no_pairs_but_does_not_crash(self):
+        broken = self._write("broken.ini", "[db\nhost = x\n")
+        good = self._write("good.ini", "[cache]\nhost = 127.0.0.1\n")
+
+        pairs = discover_section_keys([broken, good])
+
+        self.assertEqual(pairs, [("cache", "host")])
+
+    def test_missing_file_contributes_no_pairs_but_does_not_crash(self):
+        missing = os.path.join(self.tmpdir.name, "does-not-exist.ini")
+        good = self._write("good.ini", "[cache]\nhost = 127.0.0.1\n")
+
+        pairs = discover_section_keys([missing, good])
+
+        self.assertEqual(pairs, [("cache", "host")])
+
+    def test_no_files_yields_no_pairs(self):
+        self.assertEqual(discover_section_keys([]), [])
 
 
 class ReadFileListTests(unittest.TestCase):
