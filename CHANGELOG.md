@@ -6,6 +6,8 @@ based on [Keep a Changelog](https://keepachangelog.com/), versions follow
 
 ## [Unreleased]
 
+- `--version` prints the installed version and exits.
+
 ## [0.1.0]
 
 Initial release.

@@ -4,6 +4,7 @@ import json
 import sys
 from typing import Optional, Sequence
 
+from . import __version__
 from .resolver import discover_section_keys, read_file_list, trace
 
 
@@ -64,6 +65,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "--json",
         action="store_true",
         help="emit machine-readable JSON instead of the human-readable report",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"iniwhich {__version__}",
     )
     args = parser.parse_args(argv)
 

@@ -61,6 +61,16 @@ class TraceCommandTests(CliTestCase):
                 main(["db", "host"])
         self.assertEqual(ctx.exception.code, 2)
 
+    def test_version_flag_prints_version_and_exits_zero(self):
+        from iniwhich import __version__
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            with self.assertRaises(SystemExit) as ctx:
+                main(["--version"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn(__version__, out.getvalue())
+
 
 class FilesFromTests(CliTestCase):
     def test_reads_precedence_list_from_file(self):
