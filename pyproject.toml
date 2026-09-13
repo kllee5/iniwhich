@@ -1,6 +1,6 @@
 [project]
 name = "iniwhich"
-version = "0.1.0"
+version = "0.1.1"
 description = "Trace which INI file sets a key's effective value across layered configs"
 readme = "README.md"
 license = {text = "MIT"}

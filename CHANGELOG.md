@@ -4,7 +4,7 @@ All notable changes to this project are documented here. Format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.1] - 2026-09-14
 
 - `--version` prints the installed version and exits.
 
