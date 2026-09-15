@@ -7,6 +7,8 @@ based on [Keep a Changelog](https://keepachangelog.com/), versions follow
 ## [0.1.1] - 2026-09-14
 
 - `--version` prints the installed version and exits.
+- Ships a `py.typed` marker so type checkers pick up the package's type
+  hints instead of treating it as untyped.
 
 ## [0.1.0]
 
